@@ -99,13 +99,19 @@ func (hlsDl *HlsDl) downloadSegments(segments []*Segment) error {
 	wg := &sync.WaitGroup{}
 	wg.Add(hlsDl.workers)
 
+	// Send a signal telling all segments successfully finished.
 	finishedChan := wait(wg)
+
+	// Quitted(failed segment) channel after retry failing
 	quitChan := make(chan bool)
 	segmentChan := make(chan *Segment)
+
+	// Channel to store the result of downloading segment, containing success and failed type.
 	downloadResultChan := make(chan *DownloadResult, hlsDl.workers)
 
 	for i := 0; i < hlsDl.workers; i++ {
-		go func() {
+		// Func for calling func `downloadSegment()` below.
+		go func() { 
 			defer wg.Done()
 
 			for segment := range segmentChan {
@@ -115,26 +121,29 @@ func (hlsDl *HlsDl) downloadSegments(segments []*Segment) error {
 				tried++
 
 				select {
+				// If the number of downloads exceeds the limits, and segment will be put into quitChan, which indicates the quitChan is not empty.
 				case <-quitChan:
 					return
 				default:
 				}
-
+				
+				// Failed to download a segment.
 				if err := hlsDl.downloadSegment(segment); err != nil {
 					if strings.Contains(err.Error(), "connection reset by peer") && tried < 3 {
 						time.Sleep(time.Second)
 						log.Println("Retry download segment ", segment.SeqId)
+						// Retry downloading 
 						goto DOWNLOAD
 					}
-
+					// Same segment's downloading time exceeds the retry times limits, and send this failed seg to channel
 					downloadResultChan <- &DownloadResult{Err: err, SeqId: segment.SeqId}
 					return
 				}
-
+				// Send a success segment to channel with `nil` err
 				downloadResultChan <- &DownloadResult{SeqId: segment.SeqId}
 			}
 		}()
-	}
+	} 
 
 	go func() {
 		defer close(segmentChan)
@@ -144,6 +153,7 @@ func (hlsDl *HlsDl) downloadSegments(segments []*Segment) error {
 			segment.Path = filepath.Join(hlsDl.dir, segName)
 
 			select {
+			// Send segment to channel in successive, starting the func in the upper for loop.
 			case segmentChan <- segment:
 			case <-quitChan:
 				return
@@ -165,6 +175,7 @@ func (hlsDl *HlsDl) downloadSegments(segments []*Segment) error {
 	}()
 
 	for {
+		// Wait for resul
 		select {
 		case <-finishedChan:
 			return nil

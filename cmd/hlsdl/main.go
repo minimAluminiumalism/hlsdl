@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-
+	"fmt"
 	"github.com/canhlinh/hlsdl"
 	"github.com/spf13/cobra"
 )
@@ -29,6 +29,7 @@ func main() {
 func cmdF(command *cobra.Command, args []string) error {
 	m3u8URL, err := command.Flags().GetString("url")
 	if err != nil {
+		fmt.Println("URL Error!")
 		return err
 	}
 
@@ -52,6 +53,10 @@ func cmdF(command *cobra.Command, args []string) error {
 }
 
 func downloadVodMovie(url string, dir string, workers int) error {
+	// Default value of `workers` is 2
+
+	url = "https://bitdash-a.akamaihd.net/content/sintel/hls/video/1500kbit.m3u8"
+	
 	hlsDL := hlsdl.New(url, nil, dir, workers, true)
 	filepath, err := hlsDL.Download()
 	if err != nil {

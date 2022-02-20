@@ -19,6 +19,8 @@ func parseHlsSegments(hlsURL string, headers map[string]string) ([]*Segment, err
 	if err != nil {
 		return nil, err
 	}
+
+	// Attention: this package doesn't support multiple stream playlist m3u8 file, raising error.
 	if t != m3u8.MEDIA {
 		return nil, errors.New("No support the m3u8 format")
 	}
@@ -70,6 +72,10 @@ func newRequest(url string, headers map[string]string) (*http.Request, error) {
 	return req, nil
 }
 
+// m3u8.PlayList: m3u8 file content; m3u8.ListType: value `1` for master m3u8 file and `2` for normal media m3u8 file
+// Type "master": https://multiplatform-f.akamaihd.net/i/multi/will/bunny/big_buck_bunny_,640x360_400,640x360_700,640x360_1000,950x540_1500,.f4v.csmil/master.m3u8
+// Type "media": http://devimages.apple.com.edgekey.net/iphone/samples/bipbop/gear4/prog_index.m3u8
+
 func getM3u8ListType(url string, headers map[string]string) (m3u8.Playlist, m3u8.ListType, error) {
 
 	req, err := newRequest(url, headers)
@@ -91,6 +97,5 @@ func getM3u8ListType(url string, headers map[string]string) (m3u8.Playlist, m3u8
 	if err != nil {
 		return nil, 0, err
 	}
-
 	return p, t, nil
 }
