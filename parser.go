@@ -2,6 +2,7 @@ package hlsdl
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,7 +23,28 @@ func parseHlsSegments(hlsURL string, headers map[string]string) ([]*Segment, err
 
 	// Attention: this package doesn't support multiple stream playlist m3u8 file, raising error.
 	if t != m3u8.MEDIA {
-		return nil, errors.New("No support the m3u8 format")
+		var maxBandWidth uint32 = 0
+		var bandWidth uint32
+		var playlistURI string
+		for _, playlistSeg := range p.(*m3u8.MasterPlaylist).Variants {
+			bandWidth = playlistSeg.Bandwidth
+			if bandWidth > maxBandWidth {
+				maxBandWidth = bandWidth
+				playlistURI = playlistSeg.URI
+			}
+		}
+
+		if !strings.Contains(playlistURI, "http") {
+			segmentURL, err := baseURL.Parse(playlistURI)
+			if err != nil {
+				return nil, err
+			}
+			playlistURI = segmentURL.String()
+		}
+		fmt.Println(playlistURI)
+		segs, err := parseHlsSegments(playlistURI, headers)
+		return segs, err
+		// return nil, errors.New("No support the m3u8 format")
 	}
 
 	mediaList := p.(*m3u8.MediaPlaylist)

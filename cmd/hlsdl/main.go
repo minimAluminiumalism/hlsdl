@@ -54,9 +54,10 @@ func cmdF(command *cobra.Command, args []string) error {
 
 func downloadVodMovie(url string, dir string, workers int) error {
 	// Default value of `workers` is 2
-
-	url = "https://bitdash-a.akamaihd.net/content/sintel/hls/video/1500kbit.m3u8"
-	
+	// media type:
+	// url = "https://bitdash-a.akamaihd.net/content/sintel/hls/video/1500kbit.m3u8"
+	// master type:
+	// url = "http://devimages.apple.com.edgekey.net/iphone/samples/bipbop/bipbopall.m3u8"
 	hlsDL := hlsdl.New(url, nil, dir, workers, true)
 	filepath, err := hlsDL.Download()
 	if err != nil {

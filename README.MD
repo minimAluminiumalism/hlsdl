@@ -44,14 +44,19 @@ func main() {
 
 ### How to build a console application
 
-Build for linux
+Build for Linux
 ```
-make build-linux
+make build_linux
 ```
 
-Build for windows
+Build for Windows
 ```
-make build-windows
+make build_windows
+```
+
+```
+Build for macOS
+make build_osx
 ```
 
 Run the application
